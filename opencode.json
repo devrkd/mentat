@@ -1,7 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "deepseek/deepseek-v4-pro",
-  "small_model": "deepseek/deepseek-flash",
+  "model": "{env:OPENCODE_MODEL}",
+  "small_model": "{env:OPENCODE_SMALL_MODEL}",
+  "agent": {
+    "orchestrator": { "model": "{env:ORCHESTRATOR_MODEL}", "variant": "{env:ORCHESTRATOR_VARIANT}" },
+    "architect":   { "model": "{env:ARCHITECT_MODEL}",    "variant": "{env:ARCHITECT_VARIANT}" },
+    "developer":   { "model": "{env:DEVELOPER_MODEL}",    "variant": "{env:DEVELOPER_VARIANT}" },
+    "staff":       { "model": "{env:STAFF_MODEL}",        "variant": "{env:STAFF_VARIANT}" }
+  },
   "mcp": {
     "github": {
       "type": "remote",
