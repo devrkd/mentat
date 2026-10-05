@@ -22,16 +22,18 @@ A parallel Claude Code harness is retained in `.claude/` for Claude Code users; 
 
 | Agent | Mode | Model | Variant | Role |
 |---|---|---|---|---|
-| `orchestrator` | `primary` | `deepseek/deepseek-flash` | `low` | Classifies intent, dispatches via the `task` tool, never edits product code |
-| `architect` | `all` | `deepseek/deepseek-v4-pro` | `max` | Design, ADR authoring, repo intel |
-| `developer` | `all` | `deepseek/deepseek-v4-pro` | `max` | Implementation only; requires a task id |
-| `staff` | `all` | `deepseek/deepseek-v4-pro` | `max` | Read-only cross-source analysis |
+| `orchestrator` | `primary` | `{env:ORCHESTRATOR_MODEL}` | `{env:ORCHESTRATOR_VARIANT}` | Classifies intent, dispatches via the `task` tool, never edits product code |
+| `architect` | `all` | `{env:ARCHITECT_MODEL}` | `{env:ARCHITECT_VARIANT}` | Design, ADR authoring, repo intel |
+| `developer` | `all` | `{env:DEVELOPER_MODEL}` | `{env:DEVELOPER_VARIANT}` | Implementation only; requires a task id |
+| `staff` | `all` | `{env:STAFF_MODEL}` | `{env:STAFF_VARIANT}` | Read-only cross-source analysis |
+
+The Model / Variant columns show the env var each agent resolves at startup. `OPENCODE_MODEL` / `OPENCODE_SMALL_MODEL` set the defaults for anything without a per-role entry; the per-role `*_MODEL` / `*_VARIANT` vars override them. Set these in `.env` (copy from `.env.example`) and load it into the shell (`set -a; source .env; set +a` — opencode does not auto-load `.env`), then restart opencode to apply.
 
 Each agent is covered in depth on its page below.
 
 ## Pages
 
-- [Agents](agents.md) — the four agents in depth, including the agents table and model mapping.
+- [Agents](agents.md) — the four agents in depth, including the agents table and env-driven model mapping.
 - [Commands](commands.md) — the four slash commands and how to use them.
 - [Workflow](workflow.md) — the end-to-end flow, the hard gates, and branch naming.
 - [Handoff](handoff.md) — the `handoff.json` contract between Architect and Developer, and the `.tmp/` lifecycle.
