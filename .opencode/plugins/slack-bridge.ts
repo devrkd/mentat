@@ -8,7 +8,9 @@ import { createBridge } from "../lib/slack/bridge.ts"
  *   question cards, each with a compact, redacted context summary.
  * - Shows an in-progress loader reaction (:hourglass_flowing_sand:) on the
  *   session's root message while it works — added when the session starts or
- *   new activity arrives, removed when it idles or is deleted.
+ *   new activity arrives, and swapped for a done check mark (:white_check_mark:)
+ *   when the session goes idle or is deleted; new activity after idle swaps
+ *   it back.
  * - Handles the /s slash command: an ephemeral reply with the session's
  *   last few activity lines, pending approval/question state, all redacted.
  * - Lets you answer approvals and questions with buttons and inject thread
