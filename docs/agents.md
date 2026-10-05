@@ -5,14 +5,14 @@ description: The four opencode agents — Orchestrator, Architect, Developer, St
 
 # Agents
 
-Agent definitions live in [`.opencode/agent/`](https://github.com/devrkd/mentat/blob/main/.opencode/agent/). Model mapping is set per agent (opencode has no `haiku`/`sonnet`/`opus` aliases); edit the `model:` field in each `.opencode/agent/*.md` to remap.
+Agent definitions live in [`.opencode/agent/`](https://github.com/devrkd/mentat/blob/main/.opencode/agent/). Model mapping is set per agent via environment variables in `opencode.json` (opencode has no `haiku`/`sonnet`/`opus` aliases): `OPENCODE_MODEL` / `OPENCODE_SMALL_MODEL` plus per-role `ORCHESTRATOR_MODEL` / `ORCHESTRATOR_VARIANT`, `ARCHITECT_MODEL` / `ARCHITECT_VARIANT`, `DEVELOPER_MODEL` / `DEVELOPER_VARIANT`, `STAFF_MODEL` / `STAFF_VARIANT`. Set them in `.env` (copy from `.env.example`), load `.env` into the shell (`set -a; source .env; set +a` — opencode does not auto-load it), and restart opencode to apply.
 
 | Agent | Mode | Model | Variant | Role |
 |---|---|---|---|---|
-| `orchestrator` | `primary` | `deepseek/deepseek-flash` | `low` | Classifies intent, dispatches via the `task` tool, never edits product code |
-| `architect` | `all` | `deepseek/deepseek-v4-pro` | `max` | Design, ADR authoring, repo intel |
-| `developer` | `all` | `deepseek/deepseek-v4-pro` | `max` | Implementation only; requires a task id |
-| `staff` | `all` | `deepseek/deepseek-v4-pro` | `max` | Read-only cross-source analysis |
+| `orchestrator` | `primary` | `{env:ORCHESTRATOR_MODEL}` | `{env:ORCHESTRATOR_VARIANT}` | Classifies intent, dispatches via the `task` tool, never edits product code |
+| `architect` | `all` | `{env:ARCHITECT_MODEL}` | `{env:ARCHITECT_VARIANT}` | Design, ADR authoring, repo intel |
+| `developer` | `all` | `{env:DEVELOPER_MODEL}` | `{env:DEVELOPER_VARIANT}` | Implementation only; requires a task id |
+| `staff` | `all` | `{env:STAFF_MODEL}` | `{env:STAFF_VARIANT}` | Read-only cross-source analysis |
 
 ## Orchestrator
 
