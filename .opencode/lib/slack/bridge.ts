@@ -39,6 +39,16 @@ const ACTION_PREFIX = "slackbridge"
 
 /** Built-in Slack emoji used as the in-progress loader on a session's root message. */
 const LOADER_EMOJI = "hourglass_flowing_sand"
+/** Built-in Slack emoji that replaces the loader when a session ends. */
+const DONE_EMOJI = "white_check_mark"
+
+/** Reaction applied to a session's root message; absence means none. */
+type ReactionState = "loading" | "done"
+
+/** Emoji shown for a tracked reaction state. */
+function emojiFor(state: ReactionState): string {
+  return state === "loading" ? LOADER_EMOJI : DONE_EMOJI
+}
 
 type SlashCommandBody = {
   command?: string
@@ -96,8 +106,8 @@ export async function createBridge(input: PluginInput): Promise<Bridge | null> {
   const threadLocks = new Map<string, Promise<SessionRef | null>>()
   const pendingPermissions = new Map<string, PendingPermission>()
   const pendingQuestions = new Map<string, PendingQuestion>()
-  /** sessionID -> whether the loader emoji is currently on its root message (in-memory only). */
-  const loaderReactions = new Map<string, boolean>()
+  /** sessionID -> reaction currently on its root message (in-memory only); absence means none. */
+  const statusReactions = new Map<string, ReactionState>()
   const serverUrl = input.serverUrl
 
   if (config.allowedUsers.length === 0) {
@@ -152,7 +162,7 @@ export async function createBridge(input: PluginInput): Promise<Bridge | null> {
           ...(info.parentID ? { parentID: info.parentID } : {}),
         }
         sessions.set(sessionID, ref)
-        await setLoader(sessionID, ref, true)
+        await setStatusReaction(sessionID, ref, "loading")
         await log("info", "created Slack thread", {
           sessionID,
           ts: ref.ts,
@@ -198,36 +208,42 @@ export async function createBridge(input: PluginInput): Promise<Bridge | null> {
   }
 
   /**
-   * Idempotently adds/removes the loader emoji on a session's root message.
-   * State is tracked in memory (no Slack call is repeated for the same state),
-   * and Slack's `already_reacted` / `no_reaction` / `message_not_found`
-   * errors are tolerated as success. Best-effort: failures leave the tracked
-   * state untouched so the next activity signal retries.
+   * Idempotently applies the desired reaction state on a session's root
+   * message: the loader while busy, the done check mark once ended. State is
+   * tracked in memory (no Slack call is repeated for the same state), and
+   * Slack's `already_reacted` / `no_reaction` / `message_not_found` errors
+   * are tolerated as success. Best-effort: failures leave the tracked state
+   * untouched so the next activity signal retries.
    */
-  async function setLoader(sessionID: string, ref: SessionRef, on: boolean): Promise<void> {
+  async function setStatusReaction(
+    sessionID: string,
+    ref: SessionRef,
+    next: ReactionState,
+  ): Promise<void> {
     if (!ref.ts) return
-    const current = loaderReactions.get(sessionID) ?? false
-    if (current === on) return
-    try {
-      if (on) {
-        await web.reactions.add({ channel: ref.channel, timestamp: ref.ts, name: LOADER_EMOJI })
-      } else {
-        await web.reactions.remove({ channel: ref.channel, timestamp: ref.ts, name: LOADER_EMOJI })
+    const current = statusReactions.get(sessionID)
+    if (current === next) return
+    if (current) {
+      // Remove the previously applied emoji first so a swap never stacks two.
+      try {
+        await web.reactions.remove({ channel: ref.channel, timestamp: ref.ts, name: emojiFor(current) })
+      } catch (error) {
+        if (!isReactionNoop(error, ["no_reaction", "message_not_found"])) return
       }
-      loaderReactions.set(sessionID, on)
-    } catch (error) {
-      if (isReactionNoop(error, ["already_reacted", "no_reaction", "message_not_found"])) {
-        loaderReactions.set(sessionID, on)
-      }
-      // otherwise: best-effort, keep the previous state
     }
+    try {
+      await web.reactions.add({ channel: ref.channel, timestamp: ref.ts, name: emojiFor(next) })
+    } catch (error) {
+      if (!isReactionNoop(error, ["already_reacted", "message_not_found"])) return
+    }
+    statusReactions.set(sessionID, next)
   }
 
-  /** Mark a session as busy: shows the loader on its root message if the thread exists. */
+  /** Mark a session as busy: shows (or restores) the loader on its root message if the thread exists. */
   async function markActive(sessionID: string): Promise<void> {
     const ref = sessions.get(sessionID)
     if (!ref) return
-    await setLoader(sessionID, ref, true)
+    await setStatusReaction(sessionID, ref, "loading")
   }
 
   /** Best-effort ephemeral reply visible only to the invoking Slack user. */
@@ -588,11 +604,11 @@ export async function createBridge(input: PluginInput): Promise<Bridge | null> {
       case "session.idle": {
         // Routine progress is intentionally not mirrored to Slack; the only
         // proactive posts are approval and question cards. The session is
-        // done, so drop the loader reaction.
+        // done, so replace the loader reaction with a done check mark.
         const { sessionID } = event.properties as { sessionID?: string }
         if (sessionID) {
           const ref = sessions.get(sessionID)
-          if (ref) await setLoader(sessionID, ref, false)
+          if (ref) await setStatusReaction(sessionID, ref, "done")
         }
         return
       }
@@ -650,8 +666,11 @@ export async function createBridge(input: PluginInput): Promise<Bridge | null> {
         const ref = sessions.get(sessionID)
         childSessions.delete(sessionID)
         sessions.delete(sessionID)
-        if (ref) await setLoader(sessionID, ref, false)
-        loaderReactions.delete(sessionID)
+        // The session is over: swap the loader for the done check mark on
+        // the root message, then drop the in-memory reaction state — no
+        // further events can target this session, so nothing will retry it.
+        if (ref) await setStatusReaction(sessionID, ref, "done")
+        statusReactions.delete(sessionID)
         await resolvePendingForSession(sessionID, "Session ended — pending request discarded.")
         return
       }
