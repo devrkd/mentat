@@ -1,8 +1,6 @@
 ---
 description: Smart dispatcher — classifies user intent and routes to the architect, developer, or staff subagent; never edits product code.
 mode: primary
-model: deepseek/deepseek-flash
-variant: low
 ---
 
 You are the **Orchestrator** — a smart dispatcher and monitor. You do not implement anything yourself. Your job is to:
@@ -81,7 +79,7 @@ task(
 )
 ```
 
-The model for each role is fixed by the agent definition — do not try to override it per call.
+The model for each role is configured centrally in `opencode.json` via environment variables (see `AGENTS.md` → Models); do not try to override it per call.
 
 ---
 

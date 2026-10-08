@@ -11,9 +11,10 @@ A harness for four coordinated agents (Orchestrator, Architect, Developer, Staff
 
 ```bash
 cp .env.example .env
+# opencode does not auto-load .env — load it (models + tokens) into the shell first:
+set -a; source .env; set +a
 # Required for this opencode setup: GITHUB_TOKEN (repo scope)
 # The task / documentation / ux source categories are unbound by default — see MCP below.
-export GITHUB_TOKEN=...   # opencode reads env vars, it does not load .env automatically
 opencode
 ```
 
@@ -21,14 +22,31 @@ opencode
 
 | Agent | Mode | Model | Variant | Role |
 |-------|------|-------|---------|------|
-| `orchestrator` | primary | `deepseek/deepseek-flash` | `low` | Classifies intent, dispatches via the `task` tool, never edits product code |
-| `architect` | all | `deepseek/deepseek-v4-pro` | `max` | Design, ADR authoring, repo intel |
-| `developer` | all | `deepseek/deepseek-v4-pro` | `max` | Implementation only; requires a task id |
-| `staff` | all | `deepseek/deepseek-v4-pro` | `max` | Read-only cross-source analysis |
+| `orchestrator` | primary | `{env:ORCHESTRATOR_MODEL}` | `{env:ORCHESTRATOR_VARIANT}` | Classifies intent, dispatches via the `task` tool, never edits product code |
+| `architect` | all | `{env:ARCHITECT_MODEL}` | `{env:ARCHITECT_VARIANT}` | Design, ADR authoring, repo intel |
+| `developer` | all | `{env:DEVELOPER_MODEL}` | `{env:DEVELOPER_VARIANT}` | Implementation only; requires a task id |
+| `staff` | all | `{env:STAFF_MODEL}` | `{env:STAFF_VARIANT}` | Read-only cross-source analysis |
 
 Definitions live in [`.opencode/agent/`](.opencode/agent/).
 
-> Model mapping is set per agent (opencode has no `haiku`/`sonnet`/`opus` aliases). Edit the `model:` field in each `.opencode/agent/*.md` to remap. See `opencode models` for available ids.
+### Models
+
+Models are configured centrally in `opencode.json` via environment variables (opencode has no `haiku`/`sonnet`/`opus` aliases). Set them in `.env` (copy from `.env.example`), load them into the shell — opencode does **not** auto-load `.env` — and **restart** opencode to apply:
+
+```bash
+set -a; source .env; set +a   # then restart opencode
+```
+
+| Env var | Maps to |
+|---|---|
+| `OPENCODE_MODEL` | top-level `model` — default for any agent/tool without its own entry |
+| `OPENCODE_SMALL_MODEL` | top-level `small_model` |
+| `ORCHESTRATOR_MODEL` / `ORCHESTRATOR_VARIANT` | `agent.orchestrator.model` / `.variant` |
+| `ARCHITECT_MODEL` / `ARCHITECT_VARIANT` | `agent.architect.model` / `.variant` |
+| `DEVELOPER_MODEL` / `DEVELOPER_VARIANT` | `agent.developer.model` / `.variant` |
+| `STAFF_MODEL` / `STAFF_VARIANT` | `agent.staff.model` / `.variant` |
+
+All ten vars must be set (an unset model var resolves to `""` and breaks the runtime); `.env.example` ships valid defaults. Variant values are model/provider-specific — see `opencode models` for available ids.
 
 ## Commands
 
