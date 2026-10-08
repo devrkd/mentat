@@ -79,6 +79,8 @@ jobs:
       - name: Create and push tag
         if: steps.tag.outputs.exists == 'false'
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           echo "releasing opencode-slack-bridge@${{ steps.version.outputs.value }} — creating tag v${{ steps.version.outputs.value }}"
           git tag -a "v${{ steps.version.outputs.value }}" -m "opencode-slack-bridge v${{ steps.version.outputs.value }}"
           git push origin "refs/tags/v${{ steps.version.outputs.value }}"
