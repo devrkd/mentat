@@ -3,8 +3,8 @@ import { WebClient } from "@slack/web-api"
 import { SocketModeClient } from "@slack/socket-mode"
 import type { PluginInput } from "@opencode-ai/plugin"
 import type { Session } from "@opencode-ai/sdk"
-import { loadConfig } from "./config.ts"
-import { SessionMap, type SessionRef } from "./session-map.ts"
+import { loadConfig } from "./config"
+import { SessionMap, type SessionRef } from "./session-map"
 import {
   childSessionRootText,
   childThreadPointerText,
@@ -25,7 +25,7 @@ import {
   type PermissionInfo,
   type QuestionRequestInfo,
   type StatusActivity,
-} from "./format.ts"
+} from "./format"
 
 type OpenCodeClient = PluginInput["client"]
 
