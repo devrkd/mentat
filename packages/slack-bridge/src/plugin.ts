@@ -1,5 +1,5 @@
 import type { Plugin } from "@opencode-ai/plugin"
-import { createBridge } from "../lib/slack/bridge.ts"
+import { createBridge } from "./bridge"
 
 /**
  * Bridges opencode agent sessions to Slack.
