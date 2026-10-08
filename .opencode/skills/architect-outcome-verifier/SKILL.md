@@ -54,7 +54,6 @@ Flag any gap as a partial match or mismatch.
 
 ### 6. Report the summary
 Deliver the summary in chat (and optionally `.tmp/<task-id>/outcome.md`), with:
-- First line: AI disclaimer (see `rules/disclaimers.md`)
 - Final verdict
 - Requirement-to-evidence table
 - Gap list with severity (critical / major / minor) if any

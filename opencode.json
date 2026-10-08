@@ -20,9 +20,10 @@
       }
     },
     "documentation": {
-      "enabled": false,
       "type": "remote",
-      "url": "https://your-documentation-provider.example/mcp/",
+      "url": "https://api.nuclino.com/mcp",
+      "oauth": false,
+      "enabled": true,
       "headers": {
         "Authorization": "Bearer {env:DOCUMENTATION_PROVIDER_TOKEN}"
       }

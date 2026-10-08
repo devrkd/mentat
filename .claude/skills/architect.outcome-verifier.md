@@ -49,7 +49,6 @@ Flag any gap as a partial match or mismatch.
 
 ### 6. Post summary to main task
 Post a comment on the main task (via the task MCP) with:
-- First line: AI disclaimer (see `rules/disclaimers.md`)
 - Final verdict
 - Requirement-to-evidence table
 - Gap list with severity (critical / major / minor) if any

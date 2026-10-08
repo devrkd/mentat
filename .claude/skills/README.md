@@ -6,7 +6,7 @@ This repository uses a docs-managed skill system to separate role boundaries fro
 
 - Roles in `.claude/prompts/` define authority and constraints.
 - Skills in `.claude/skills/` define repeatable workflows.
-- Rules in `rules/` define cross-cutting policies (disclaimers, gates, cleanup, conflict resolution).
+- Rules in `rules/` define cross-cutting policies (gates, cleanup, conflict resolution).
 - Orchestrator assigns required skills for each delegation.
 
 ## Available skills
@@ -41,7 +41,6 @@ Rules in `rules/` are referenced by skills and prompts — not repeated in them:
 
 | Rule file | What it governs |
 |---|---|
-| `rules/disclaimers.md` | Task and documentation AI disclaimer format |
 | `rules/approval-gate.md` | ADR human approval gate definition and state transitions |
 | `rules/cleanup.md` | `.tmp/<task-id>/` lifecycle and ownership per agent |
 | `rules/design-conflict.md` | How to resolve UX-design vs ADR conflicts |

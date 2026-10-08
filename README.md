@@ -48,7 +48,7 @@ scripts/
   clone-repo-for-analysis.sh  Shallow-clone product repos for Architect analysis
   slack-server.sh       Run a headless opencode server with the Slack bridge
 metrics/                Prometheus + Grafana observability stack → [metrics/README.md](metrics/README.md)
-rules/                  Shared workflow rules (approval gate, disclaimers, cleanup, etc.)
+rules/                  Shared workflow rules (approval gate, cleanup, etc.)
 HANDOFF.md              Handoff contract reference
 .env.example            Required environment variables
 ```

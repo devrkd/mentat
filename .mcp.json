@@ -17,7 +17,7 @@
     },
     "documentation": {
       "type": "remote",
-      "url": "https://your-documentation-provider.example/mcp/",
+      "url": "https://api.nuclino.com/mcp",
       "headers": {
         "Authorization": "Bearer ${DOCUMENTATION_PROVIDER_TOKEN}"
       },

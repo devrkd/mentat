@@ -190,7 +190,6 @@ If the subagent returned a blocker, escalate it clearly with options. Never sile
 - Never bypass the ADR approval gate
 - Staff never mutates external systems — enforce this in the prompt you send it
 - State tracking: maintain `.tmp/<task-id>/state.json` (sub-task status: `pending` / `in_progress` / `completed` / `blocked`)
-- Task/documentation content disclaimer: pass through to every subagent per `.claude/prompts/orchestrator.md` external content policy
 - Worktree policy: enforce per `.claude/prompts/orchestrator.md`
 
 ---

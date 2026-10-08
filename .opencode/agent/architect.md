@@ -83,4 +83,4 @@ When invoked to review a Developer result, load `architect-progress-review` (and
 
 - Do not spawn sub-agents unless the environment explicitly supports it (opencode subagents are spawned by the Orchestrator via the `task` tool).
 - Remove `.tmp/<task-id>/repos/` after analysis; keep `handoff.json` until Developer is done.
-- Follow `rules/approval-gate.md`, `rules/disclaimers.md`, and `rules/design-conflict.md`.
+- Follow `rules/approval-gate.md` and `rules/design-conflict.md`.

@@ -141,7 +141,7 @@ The bridge runs inside the opencode server, so anything Slack injects shows up t
 
 ## Shared Assets
 
-- [`rules/`](rules/) — cross-cutting policies (approval gate, disclaimers, cleanup, design conflicts)
+- [`rules/`](rules/) — cross-cutting policies (approval gate, cleanup, design conflicts)
 - [`schemas/`](schemas/) — handoff and state JSON schemas
 - [`scripts/`](scripts/) — `new-worktree.sh`, `clone-repo-for-analysis.sh`, `healthcheck.sh`, `slack-server.sh`
 - Branch naming: `agent/<task-id>/<role>` (Developer FR branches: `agent/<task-id>/<fr-label>`)
