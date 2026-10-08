@@ -1,0 +1,84 @@
+name: release-slack-bridge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/slack-bridge/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-slack-bridge
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Read package version
+        id: version
+        run: echo "value=$(node -p "require('./packages/slack-bridge/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether tag v<version> exists
+        id: tag
+        run: |
+          if git ls-remote --tags origin "refs/tags/v${{ steps.version.outputs.value }}" | grep -q .; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check whether the npm version exists
+        id: npm
+        if: steps.tag.outputs.exists == 'false'
+        run: |
+          if npm view "opencode-slack-bridge@${{ steps.version.outputs.value }}" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip — release already tagged
+        if: steps.tag.outputs.exists == 'true'
+        run: echo "v${{ steps.version.outputs.value }} already exists — nothing to do"
+
+      - name: Tag repair — published but untagged
+        if: steps.tag.outputs.exists == 'false' && steps.npm.outputs.published == 'true'
+        run: echo "opencode-slack-bridge@${{ steps.version.outputs.value }} is already on npm but tag v${{ steps.version.outputs.value }} is missing — creating the tag only (no re-publish)"
+
+      - name: Install dependencies
+        if: steps.tag.outputs.exists == 'false' && steps.npm.outputs.published == 'false'
+        run: npm ci
+        working-directory: packages/slack-bridge
+
+      - name: Build
+        if: steps.tag.outputs.exists == 'false' && steps.npm.outputs.published == 'false'
+        run: npm run build
+        working-directory: packages/slack-bridge
+
+      - name: Publish to npm
+        if: steps.tag.outputs.exists == 'false' && steps.npm.outputs.published == 'false'
+        run: npm publish --access public
+        working-directory: packages/slack-bridge
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create and push tag
+        if: steps.tag.outputs.exists == 'false'
+        run: |
+          echo "releasing opencode-slack-bridge@${{ steps.version.outputs.value }} — creating tag v${{ steps.version.outputs.value }}"
+          git tag -a "v${{ steps.version.outputs.value }}" -m "opencode-slack-bridge v${{ steps.version.outputs.value }}"
+          git push origin "refs/tags/v${{ steps.version.outputs.value }}"
