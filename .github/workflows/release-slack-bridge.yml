@@ -1,5 +1,14 @@
 name: release-slack-bridge
 
+# Conventional-commit driven release: every push to main that touches the
+# package computes the next semver from the commits since the last v* tag
+# (feat -> minor, BREAKING CHANGE / `!:` -> major, anything else -> patch),
+# bumps package.json, publishes to npm, and tags the release.
+#
+# Loop guard: the release commit itself (`chore(release): …`) touches the
+# package and re-triggers this workflow; it is excluded from the bump scan,
+# so the follow-up run finds nothing to release and exits.
+
 on:
   push:
     branches:
@@ -28,59 +37,91 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: Read package version
-        id: version
-        run: echo "value=$(node -p "require('./packages/slack-bridge/package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Check whether tag v<version> exists
-        id: tag
+      - name: Compute next version from conventional commits
+        id: bump
         run: |
-          if git ls-remote --tags origin "refs/tags/v${{ steps.version.outputs.value }}" | grep -q .; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          PKG=packages/slack-bridge
+          CURRENT=$(node -p "require('./$PKG/package.json').version")
+
+          if git describe --tags --match "v*" --abbrev=0 >/dev/null 2>&1; then
+            RANGE="$(git describe --tags --match "v*" --abbrev=0)..HEAD"
           else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
+            RANGE="HEAD"
           fi
 
-      - name: Check whether the npm version exists
-        id: npm
-        if: steps.tag.outputs.exists == 'false'
-        run: |
-          if npm view "opencode-slack-bridge@${{ steps.version.outputs.value }}" version >/dev/null 2>&1; then
-            echo "published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "published=false" >> "$GITHUB_OUTPUT"
+          # Release commits are excluded so the bump commit never re-releases.
+          COMMITS=$(git log --format=%s%n%b "$RANGE" -- "$PKG" | grep -v '^chore(release)' || true)
+          if [ -z "$COMMITS" ]; then
+            echo "No package commits since ${LAST_TAG:-the beginning} — nothing to release"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
-      - name: Skip — release already tagged
-        if: steps.tag.outputs.exists == 'true'
-        run: echo "v${{ steps.version.outputs.value }} already exists — nothing to do"
+          LEVEL=patch
+          if echo "$COMMITS" | grep -qE '(^|[[:space:]])[a-zA-Z]+(\([^)]*\))?!:|BREAKING CHANGE:'; then
+            LEVEL=major
+          elif echo "$COMMITS" | grep -qE '^feat(\([^)]*\))?!?:'; then
+            LEVEL=minor
+          fi
 
-      - name: Tag repair — published but untagged
-        if: steps.tag.outputs.exists == 'false' && steps.npm.outputs.published == 'true'
-        run: echo "opencode-slack-bridge@${{ steps.version.outputs.value }} is already on npm but tag v${{ steps.version.outputs.value }} is missing — creating the tag only (no re-publish)"
+          NEXT=$(node -e "
+            const [maj, min, pat] = '$CURRENT'.split('.').map(Number);
+            const map = { major: [maj + 1, 0, 0], minor: [maj, min + 1, 0], patch: [maj, min, pat + 1] };
+            console.log(map['$LEVEL'].join('.'));
+          ")
+
+          echo "Bumping $CURRENT -> $NEXT ($LEVEL) based on:"
+          echo "$COMMITS" | grep -E '^[a-zA-Z]+(\([^)]*\))?!?:' | head -20
+          {
+            echo "release=true"
+            echo "version=$NEXT"
+            echo "level=$LEVEL"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Skip — nothing to release
+        if: steps.bump.outputs.release != 'true'
+        run: echo "No unreleased package changes — done"
+
+      - name: Bump version
+        if: steps.bump.outputs.release == 'true'
+        run: npm version "${{ steps.bump.outputs.version }}" --no-git-tag-version --allow-same-version
+        working-directory: packages/slack-bridge
+
+      - name: Commit and push the version bump
+        if: steps.bump.outputs.release == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/slack-bridge/package.json packages/slack-bridge/package-lock.json
+          git commit -m "chore(release): opencode-slack-bridge v${{ steps.bump.outputs.version }}"
+          git push origin HEAD:main
 
       - name: Install dependencies
-        if: steps.tag.outputs.exists == 'false' && steps.npm.outputs.published == 'false'
+        if: steps.bump.outputs.release == 'true'
         run: npm ci
         working-directory: packages/slack-bridge
 
       - name: Build
-        if: steps.tag.outputs.exists == 'false' && steps.npm.outputs.published == 'false'
+        if: steps.bump.outputs.release == 'true'
         run: npm run build
         working-directory: packages/slack-bridge
 
+      - name: Test
+        if: steps.bump.outputs.release == 'true'
+        run: npm test
+        working-directory: packages/slack-bridge
+
       - name: Publish to npm
-        if: steps.tag.outputs.exists == 'false' && steps.npm.outputs.published == 'false'
+        if: steps.bump.outputs.release == 'true'
         run: npm publish --access public
         working-directory: packages/slack-bridge
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create and push tag
-        if: steps.tag.outputs.exists == 'false'
+        if: steps.bump.outputs.release == 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          echo "releasing opencode-slack-bridge@${{ steps.version.outputs.value }} — creating tag v${{ steps.version.outputs.value }}"
-          git tag -a "v${{ steps.version.outputs.value }}" -m "opencode-slack-bridge v${{ steps.version.outputs.value }}"
-          git push origin "refs/tags/v${{ steps.version.outputs.value }}"
+          echo "releasing opencode-slack-bridge@${{ steps.bump.outputs.version }}"
+          git tag -a "v${{ steps.bump.outputs.version }}" -m "opencode-slack-bridge v${{ steps.bump.outputs.version }}"
+          git push origin "refs/tags/v${{ steps.bump.outputs.version }}"
