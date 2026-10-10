@@ -20,6 +20,9 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: packages/slack-bridge
+      - name: Test
+        run: npm test
+        working-directory: packages/slack-bridge
       - name: Check tag matches package version
         run: test "${{ github.ref_name }}" = "v$(node -p "require('./package.json').version")"
         working-directory: packages/slack-bridge
