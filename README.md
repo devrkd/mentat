@@ -83,8 +83,8 @@ Secrets go in `.env` — never commit them.
 
 Watch and steer opencode agent runs from Slack. The bridge is the external [`opencode-slack-bridge`](https://github.com/devrkd/opencode-slack-bridge) package ([`docs/slack-integration.md`](https://github.com/devrkd/opencode-slack-bridge/blob/main/docs/slack-integration.md) has the full behaviour reference), loaded via `opencode.json` → `"plugin"`. It posts each session into its own Slack thread and turns permission prompts into buttons you can answer from Slack.
 
-- **Progress out**: none — the channel only receives approval/question cards (with a compact, redacted context summary); routine progress (tool runs, plans, completions, errors) stays out of Slack, and host-specific detail (paths, hostnames, usernames) is redacted.
-- **Input back**: **Approve once / Always / Reject** buttons on approval prompts, option buttons for the agent's `question` tool; thread replies are injected into the running session as prompts; `!abort` stops it.
+- **Progress out**: none — the channel only receives approval/question cards (with a compact, credential-redacted context summary); routine progress (tool runs, plans, completions, errors) stays out of Slack. Credentials are redacted; paths stay readable.
+- **Input back**: **Approve once / Always / Reject** buttons on approval prompts, option buttons for the agent's `question` tool; thread replies are injected into the running session as prompts — read-only by default, with the agent's reply mirrored back into the thread; `!abort` stops it.
 
 ### Watching Slack-triggered work in the terminal
 
