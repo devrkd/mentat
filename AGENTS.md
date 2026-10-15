@@ -120,7 +120,7 @@ After ADR approval, Architect writes `.tmp/<task-id>/handoff.json` (schema: [`sc
 
 ## Slack Bridge
 
-An opencode plugin bridges opencode sessions to Slack and lets you answer approvals from Slack instead of the terminal. Useful for long `/architect` or `/developer` runs you want to monitor away from the keyboard.
+An opencode plugin bridges opencode sessions to Slack and lets you answer approvals from Slack instead of the terminal. Useful for long `/architect` or `/developer` runs you want to monitor away from the keyboard. The plugin ships as the external [`opencode-slack-bridge`](https://github.com/devrkd/opencode-slack-bridge) npm package (repo: [devrkd/opencode-slack-bridge](https://github.com/devrkd/opencode-slack-bridge)); this harness only configures it.
 
 - **Out** — one thread per session in the configured channel, used only for approval/question cards with a compact, redacted context summary. Routine progress (tool runs, plan, completion summary, errors) is not posted, and host-specific detail (absolute paths, hostnames, usernames) is redacted from everything posted. A loader reaction (`:hourglass_flowing_sand:`) on the session's root message shows work in progress: it is added when the session starts or new activity arrives (a card is posted, a Slack reply is injected) and is swapped for a done check mark (`:white_check_mark:`) when the session goes idle or is deleted; new activity after idle swaps it back.
 - **In** — permission/approval prompts post as interactive messages with **Approve once / Always / Reject** buttons. The agent's `question` tool posts option buttons too. Replying in the thread injects a prompt into the running session; `!abort` stops it.
@@ -136,11 +136,11 @@ An opencode plugin bridges opencode sessions to Slack and lets you answer approv
 6. **Reinstall** the app to the workspace so the new `commands` scope and slash command apply.
 7. `/invite` the app to the target channel and copy its channel ID.
 8. Fill `.env`: `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `SLACK_CHANNEL`, and `SLACK_ALLOWED_USERS` (your Slack member ID — recommended, or anyone in the channel can approve commands).
-9. Start `opencode`; the plugin loads automatically and installs its deps via Bun on first run.
+9. Start `opencode`; opencode installs the package on first run and the bridge connects.
 
 Set `SLACK_BRIDGE=off` to disable without removing tokens. If config is incomplete the plugin logs once and stays inert, so opencode always starts.
 
-Implementation: `.opencode/plugins/slack-bridge.ts` + `.opencode/lib/slack/`. State (`sessionID` → thread) is kept in `.opencode/slack-bridge-state.json`.
+Implementation: the [`opencode-slack-bridge`](https://github.com/devrkd/opencode-slack-bridge) npm package, loaded via `opencode.json` → `"plugin": ["opencode-slack-bridge"]`. Behaviour reference: [docs/slack-integration.md](https://github.com/devrkd/opencode-slack-bridge/blob/main/docs/slack-integration.md). State (`sessionID` → thread) is kept in `.opencode/slack-bridge-state.json`.
 
 ### Watching Slack-triggered work in the terminal
 
