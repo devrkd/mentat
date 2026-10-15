@@ -38,4 +38,4 @@ Each agent is covered in depth on its page below.
 - [Workflow](workflow.md) — the end-to-end flow, the hard gates, and branch naming.
 - [Handoff](handoff.md) — the `handoff.json` contract between Architect and Developer, and the `.tmp/` lifecycle.
 - [Reference](reference.md) — skills, MCP availability, shared assets, guardrails, and the two parallel harnesses.
-- [Slack integration](slack-integration.md) — the Slack bridge plugin: configuration, outbound approval/question cards, and inbound steering.
+- [Slack integration](https://github.com/devrkd/opencode-slack-bridge/blob/main/docs/slack-integration.md) — the Slack bridge plugin ([`opencode-slack-bridge`](https://github.com/devrkd/opencode-slack-bridge), external repo): configuration, outbound approval/question cards, and inbound steering.

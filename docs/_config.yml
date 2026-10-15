@@ -34,4 +34,4 @@ nav:
   - label: Reference
     url: /reference.html
   - label: Slack integration
-    url: /slack-integration.html
+    url: https://github.com/devrkd/opencode-slack-bridge/blob/main/docs/slack-integration.md

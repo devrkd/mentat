@@ -31,12 +31,12 @@ The `task`, `documentation`, and `ux` source categories are declared in `opencod
 | `schemas/` | JSON Schemas: [handoff.v1.json](https://github.com/devrkd/mentat/blob/main/schemas/handoff.v1.json) (+ non-secret example), [state.v1.json](https://github.com/devrkd/mentat/blob/main/schemas/state.v1.json) — see [Handoff](handoff.md) |
 | `scripts/` | `new-worktree.sh` (canonical clone + per-task/role worktree), `clone-repo-for-analysis.sh` (shallow clone into `.tmp/<task-id>/repos/`), `slack-server.sh` (headless opencode server with the Slack bridge), `healthcheck.sh` (branch/commit/date), `push-metrics.sh` (Claude Code Stop-hook metrics — Claude-only) |
 | `metrics/` | Prometheus + Grafana stack for **Claude Code** usage/cost dashboards (Claude-only) |
-| `.opencode/plugins/`, `.opencode/lib/` | The opencode Slack bridge plugin (see [Slack integration](slack-integration.md)) |
+| [`opencode-slack-bridge`](https://github.com/devrkd/opencode-slack-bridge) | npm package (external repo) providing the Slack bridge plugin; loaded via `opencode.json` → `plugin` (see [Slack integration](https://github.com/devrkd/opencode-slack-bridge/blob/main/docs/slack-integration.md)) |
 
 ## Guardrails and configuration
 
 - **Permissions** (`opencode.json`): read/edit/glob/grep/list/task are allowed; `bash` has an explicit allowlist (safe read-only commands, `git`/`gh` read + write commands, `npm`/`node`, `scripts/*.sh`) with `ask` as the default; destructive commands (`rm`, `git push --force`, `git reset --hard`, `git clean`, branch deletion, worktree removal) are denied.
-- **Environment**: `cp .env.example .env`, then `export GITHUB_TOKEN=...` (opencode reads env vars; it does not load `.env` automatically — with one exception: the Slack plugin, see [Slack integration](slack-integration.md)).
+- **Environment**: `cp .env.example .env`, then `export GITHUB_TOKEN=...` (opencode reads env vars; it does not load `.env` automatically — with one exception: the Slack plugin, see [Slack integration](https://github.com/devrkd/opencode-slack-bridge/blob/main/docs/slack-integration.md)).
 - **`.tmp/`, `.repos/`, `.worktrees/`, `.env`, `metrics/data/`** are gitignored.
 
 ## Two harnesses in parallel
